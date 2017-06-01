@@ -21,6 +21,7 @@ except ImportError:
     # http://stackoverflow.com/questions/21217399/pyqt4-qtcore-qvariant-object-instead-of-a-string
     if sys.version_info.major >= 3:
         import sip
+
         sip.setapi('QVariant', 2)
     from PyQt4.QtGui import *
     from PyQt4.QtCore import *
@@ -39,6 +40,7 @@ from pascal_voc_io import PascalVocReader
 from pascal_voc_io import XML_EXT
 
 __appname__ = 'labelImg'
+
 
 # Utility functions and classes.
 
@@ -65,7 +67,6 @@ def util_qt_strlistclass():
 
 
 class WindowMixin(object):
-
     def menu(self, title, actions=None):
         menu = self.menuBar().addMenu(title)
         if actions:
@@ -85,7 +86,6 @@ class WindowMixin(object):
 
 # PyQt5: TypeError: unhashable type: 'QListWidgetItem'
 class HashableQListWidgetItem(QListWidgetItem):
-
     def __init__(self, *args):
         super(HashableQListWidgetItem, self).__init__(*args)
 
@@ -185,8 +185,8 @@ class MainWindow(QMainWindow, WindowMixin):
         self.addDockWidget(Qt.RightDockWidgetArea, self.dock)
         # Tzutalin 20160906 : Add file list and dock to move faster
         self.addDockWidget(Qt.RightDockWidgetArea, self.filedock)
-        self.dockFeatures = QDockWidget.DockWidgetClosable\
-            | QDockWidget.DockWidgetFloatable
+        self.dockFeatures = QDockWidget.DockWidgetClosable \
+                            | QDockWidget.DockWidgetFloatable
         self.dock.setFeatures(self.dock.features() ^ self.dockFeatures)
 
         # Actions
@@ -338,7 +338,8 @@ class MainWindow(QMainWindow, WindowMixin):
             labelList=labelMenu)
 
         addActions(self.menus.file,
-                   (open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, saveAs, close, None, quit))
+                   (open, opendir, changeSavedir, openAnnotation, self.menus.recentFiles, save, saveAs, close, None,
+                    quit))
         addActions(self.menus.help, (help,))
         addActions(self.menus.view, (
             labels, advancedMode, None,
@@ -479,7 +480,7 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.menus[0].clear()
         addActions(self.canvas.menus[0], menu)
         self.menus.edit.clear()
-        actions = (self.actions.create,) if self.beginner()\
+        actions = (self.actions.create,) if self.beginner() \
             else (self.actions.createMode, self.actions.editMode)
         addActions(self.menus.edit, actions + self.actions.editMenu)
 
@@ -578,6 +579,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
         def exists(filename):
             return os.path.exists(filename)
+
         menu = self.menus.recentFiles
         menu.clear()
         files = [f for f in self.recentFiles if f !=
@@ -661,6 +663,8 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def saveLabels(self, annotationFilePath):
         annotationFilePath = u(annotationFilePath)
+        if annotationFilePath.split('.')[-1] != 'xml':
+            annotationFilePath += '.xml';
         if self.labelFile is None:
             self.labelFile = LabelFile()
             self.labelFile.verified = self.canvas.verified
@@ -826,22 +830,25 @@ class MainWindow(QMainWindow, WindowMixin):
             self.toggleActions(True)
 
             # Label xml file and show bound box according to its filename
-            if self.usingPascalVocFormat is True and \
-                    self.defaultSaveDir is not None:
-                basename = os.path.basename(
-                    os.path.splitext(self.filePath)[0]) + XML_EXT
-                xmlPath = os.path.join(self.defaultSaveDir, basename)
-                self.loadPascalXMLByFilename(xmlPath)
-
+            # if self.usingPascalVocFormat is True and \
+            #         self.defaultSaveDir is not None:
+            #     basename = os.path.basename(
+            #         os.path.splitext(self.filePath)[0]) + XML_EXT
+            #     xmlPath = os.path.join(self.defaultSaveDir, basename)
+            #     self.loadPascalXMLByFilename(xmlPath)
             self.setWindowTitle(__appname__ + ' ' + filePath)
-
             self.canvas.setFocus(True)
+            savedFileName = os.path.splitext(
+                self.filePath)[0] + LabelFile.suffix
+            if os.path.exists(savedFileName):
+                self.loadPascalXMLByFilename(savedFileName)
+
             return True
         return False
 
     def resizeEvent(self, event):
-        if self.canvas and not self.image.isNull()\
-           and self.zoomMode != self.MANUAL_ZOOM:
+        if self.canvas and not self.image.isNull() \
+                and self.zoomMode != self.MANUAL_ZOOM:
             self.adjustScale()
         super(MainWindow, self).resizeEvent(event)
 
@@ -925,7 +932,8 @@ class MainWindow(QMainWindow, WindowMixin):
             path = '.'
 
         dirpath = str(QFileDialog.getExistingDirectory(self,
-                                                       '%s - Save to the directory' % __appname__, path,  QFileDialog.ShowDirsOnly
+                                                       '%s - Save to the directory' % __appname__, path,
+                                                       QFileDialog.ShowDirsOnly
                                                        | QFileDialog.DontResolveSymlinks))
 
         if dirpath is not None and len(dirpath) > 1:
@@ -939,13 +947,13 @@ class MainWindow(QMainWindow, WindowMixin):
         if self.filePath is None:
             return
 
-        path = os.path.dirname(u(self.filePath))\
+        path = os.path.dirname(u(self.filePath)) \
             if self.filePath else '.'
         if self.usingPascalVocFormat:
             formats = ['*.%s' % str(fmt).lower()
                        for fmt in QImageReader.supportedImageFormats()]
             filters = "Open Annotation XML file (%s)" % \
-                ' '.join(formats + ['*.xml'])
+                      ' '.join(formats + ['*.xml'])
             filename = str(QFileDialog.getOpenFileName(self,
                                                        '%s - Choose a xml file' % __appname__, path, filters))
             self.loadPascalXMLByFilename(filename)
@@ -954,14 +962,14 @@ class MainWindow(QMainWindow, WindowMixin):
         if not self.mayContinue():
             return
 
-        path = os.path.dirname(self.filePath)\
+        path = os.path.dirname(self.filePath) \
             if self.filePath else '.'
 
         if self.lastOpenDir is not None and len(self.lastOpenDir) > 1:
             path = self.lastOpenDir
 
         dirpath = u(QFileDialog.getExistingDirectory(self,
-                                                     '%s - Open Directory' % __appname__, path,  QFileDialog.ShowDirsOnly
+                                                     '%s - Open Directory' % __appname__, path, QFileDialog.ShowDirsOnly
                                                      | QFileDialog.DontResolveSymlinks))
 
         if dirpath is not None and len(dirpath) > 1:
@@ -978,7 +986,7 @@ class MainWindow(QMainWindow, WindowMixin):
 
     def verifyImg(self, _value=False):
         # Proceding next image without dialog if having any label
-         if self.filePath is not None:
+        if self.filePath is not None:
             try:
                 self.labelFile.toggleVerify()
             except AttributeError:
@@ -1242,6 +1250,7 @@ def main(argv):
     '''construct main app and run it'''
     app, _win = get_main_app(argv)
     return app.exec_()
+
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
